@@ -1,10 +1,4 @@
 #!/bin/sh
-# mkdir build
-# cd build
-# CXX=/usr/local/gcc-6/bin/g++ cmake ..
-
-# make -j8
-# make install
 
 fflag=no
 cflag=no
@@ -64,6 +58,9 @@ if [ $cflag = yes ] ;
 	cd ..;
 fi
 
-if [ $mflag = yes ] ; then cd build .. ; make -j${jflag}; cd ..; fi
+if [ $mflag = yes ] ; then cd build .. ; make VERBOSE=0 -j${jflag}; cd ..; fi
 
-if [ $iflag = yes ] ; then cd build .. ; make install; cd ..; fi
+if [ $iflag = yes ] ; then cd build .. ; make VERBOSE=0 -j${jflag} install; cd ..; fi
+
+# ln -sf $PWD/lib/ov2sgd.dylib $PWD/lib/ov2sgd.so
+# python setup.py build_ext --inplace

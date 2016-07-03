@@ -22,7 +22,6 @@ template<typename MatrixType> void product(const MatrixType& m)
   /* this test covers the following files:
      Identity.h Product.h
   */
-  typedef typename MatrixType::Index Index;
   typedef typename MatrixType::Scalar Scalar;
   typedef Matrix<Scalar, MatrixType::RowsAtCompileTime, 1> RowVectorType;
   typedef Matrix<Scalar, MatrixType::ColsAtCompileTime, 1> ColVectorType;
@@ -112,6 +111,15 @@ template<typename MatrixType> void product(const MatrixType& m)
   vcres.noalias() -= m1.transpose() * v1;
   VERIFY_IS_APPROX(vcres, vc2 - m1.transpose() * v1);
 
+  // test d ?= a+b*c rules
+  res.noalias() = square + m1 * m2.transpose();
+  VERIFY_IS_APPROX(res, square + m1 * m2.transpose());
+  res.noalias() += square + m1 * m2.transpose();
+  VERIFY_IS_APPROX(res, 2*(square + m1 * m2.transpose()));
+  res.noalias() -= square + m1 * m2.transpose();
+  VERIFY_IS_APPROX(res, square + m1 * m2.transpose());
+
+
   tm1 = m1;
   VERIFY_IS_APPROX(tm1.transpose() * v1, m1.transpose() * v1);
   VERIFY_IS_APPROX(v1.transpose() * tm1, v1.transpose() * m1);
@@ -157,14 +165,16 @@ template<typename MatrixType> void product(const MatrixType& m)
     Scalar x = square2.row(c) * square2.col(c2);
     VERIFY_IS_APPROX(x, square2.row(c).transpose().cwiseProduct(square2.col(c2)).sum());
   }
-  
+
   // outer product
-  VERIFY_IS_APPROX(m1.col(c) * m1.row(r), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
-  VERIFY_IS_APPROX(m1.row(r).transpose() * m1.col(c).transpose(), m1.block(r,0,1,cols).transpose() * m1.block(0,c,rows,1).transpose());
-  VERIFY_IS_APPROX(m1.block(0,c,rows,1) * m1.row(r), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
-  VERIFY_IS_APPROX(m1.col(c) * m1.block(r,0,1,cols), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
-  VERIFY_IS_APPROX(m1.leftCols(1) * m1.row(r), m1.block(0,0,rows,1) * m1.block(r,0,1,cols));
-  VERIFY_IS_APPROX(m1.col(c) * m1.topRows(1), m1.block(0,c,rows,1) * m1.block(0,0,1,cols));
+  {
+    VERIFY_IS_APPROX(m1.col(c) * m1.row(r), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
+    VERIFY_IS_APPROX(m1.row(r).transpose() * m1.col(c).transpose(), m1.block(r,0,1,cols).transpose() * m1.block(0,c,rows,1).transpose());
+    VERIFY_IS_APPROX(m1.block(0,c,rows,1) * m1.row(r), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
+    VERIFY_IS_APPROX(m1.col(c) * m1.block(r,0,1,cols), m1.block(0,c,rows,1) * m1.block(r,0,1,cols));
+    VERIFY_IS_APPROX(m1.leftCols(1) * m1.row(r), m1.block(0,0,rows,1) * m1.block(r,0,1,cols));
+    VERIFY_IS_APPROX(m1.col(c) * m1.topRows(1), m1.block(0,c,rows,1) * m1.block(0,0,1,cols));
+  }
 
   // Aliasing
   {
@@ -177,5 +187,13 @@ template<typename MatrixType> void product(const MatrixType& m)
     x = z;
     // CwiseUnaryOp
     VERIFY_IS_APPROX(x = Scalar(1.)*(A*x), A*z);
+  }
+
+  // regression for blas_trais
+  {
+    VERIFY_IS_APPROX(square * (square*square).transpose(), square * square.transpose() * square.transpose());
+    VERIFY_IS_APPROX(square * (-(square*square)), -square * square * square);
+    VERIFY_IS_APPROX(square * (s1*(square*square)), s1 * square * square * square);
+    VERIFY_IS_APPROX(square * (square*square).conjugate(), square * square.conjugate() * square.conjugate());
   }
 }

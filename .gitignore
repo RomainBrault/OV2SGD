@@ -132,3 +132,14 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Matlab
+*.mat
+
+# Datasets
+datasets/
+*.csv
+*.txt
+*.bin
+*.data
+*.dat

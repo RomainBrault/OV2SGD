@@ -3,14 +3,15 @@
 #define EIGEN_NO_MALLOC
 
 #include <iostream>
+#include <fstream>
 // #include <cmath>
 // #include <type_traits>
 // #include <functional>
 // #include <algorithm>
-// #include "opt.hpp"
-#include "linear_operator.hpp"
+#include "opt.hpp"
+#include "IO.hpp"
 
-// using namespace Eigen;
+using namespace Eigen;
 
     // std::function<Eigen::MatrixXd(auto)> F(int count)
     // {
@@ -19,6 +20,46 @@
 
 auto main(int argc, char* argv[]) -> int
 {
+    if (argc != 2) {
+        return -1;
+    }
+    auto data = libsvm::read_sparse<uint8_t>(argv[1], 10000, 784);
+    // binary::write_batch_sparse(argv[1], std::get<0>(data), 10);
+
+    binary::write_sparse(std::string(argv[1]) + "_X_test.bin", std::get<0>(data));
+    binary::write_sparse(std::string(argv[1]) + "_y_test.bin", std::get<1>(data));
+
+    // auto X = binary::read_sparse<uint8_t, double>(std::string(argv[1]) + "_X.bin");
+    // auto y = binary::read_sparse<uint8_t, double>(std::string(argv[1]) + "_y.bin");
+
+    // // MatrixXd Xd = X.toDense();
+    // // std::cout << X.transpose() << std::endl;
+    // // std::cout << y.transpose() << std::endl;
+    // // std::cout << Xd.transpose() << std::endl;
+
+    // auto feature_map = DecomposableGaussian(Eigen::MatrixXd::Identity(10, 10), 1.09354);
+    // auto gamma = InverseScaling(1., 0.001);
+    // double lbda = 0;
+    // long int T = 60;
+    // long int batch = 1000;
+    // long int block = 1000;
+    // DSOVK estimator(RidgeLoss(), feature_map, gamma, lbda, T, batch, block);
+    // std::cout << "Fitting" << std::endl;
+    // estimator.fit(X, y);
+    // std::cout << "done" << std::endl;
+
+    // std::cout << X << std::endl;
+    // std::cout << estimator.predict(X).colwise().maxCoeff() << std::endl;
+
+    // std::cout << chunk.rows() << std::endl;
+    // std::cout << chunk.cols() << std::endl;
+    // std::cout << chunk.cast<double>().transpose() << std::endl;
+    // std::cout << std::get<0>(data).cast<double>() << std::endl;
+    // binary::write_sparse("datasets/mnist/X_train.bin", std::get<0>(data));
+    // binary::write("datasets/mnist/y_train.bin", std::get<1>(data));
+    // std::cout << "done" << std::endl;
+    // std::cout << std::get<0>(data) << std::endl;
+
     // Eigen::MatrixXd A = Eigen::MatrixXd::Random(1000, 10000);
     // Eigen::MatrixXd B = Eigen::MatrixXd::Random(500, 500);
     // Eigen::MatrixXd X = Eigen::MatrixXd::Random(500000, 1);
@@ -29,18 +70,18 @@ auto main(int argc, char* argv[]) -> int
     // Eigen::MatrixXd Y(500000, 1);
     // Y.noalias() = C.leftCols(1000).transpose() * X;
 
-    srand(0);
-    Eigen::VectorXd A = Eigen::VectorXd::Random(10);
-    Eigen::Map<Eigen::MatrixXd> M(A.data(), 5, 2);
-    std::cout << M << std::endl;
+    // srand(0);
+    // Eigen::VectorXd A = Eigen::VectorXd::Random(10);
+    // Eigen::Map<Eigen::MatrixXd> M(A.data(), 5, 2);
+    // std::cout << M << std::endl;
 
-    std::cout << std::endl;
-    srand(0);
-    Eigen::Map<Eigen::MatrixXd, 0,
-               Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>
-        M2(A.data(), 5, 2,
-            Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>(1, 5));
-    std::cout << M2 << std::endl;
+    // std::cout << std::endl;
+    // srand(0);
+    // Eigen::Map<Eigen::MatrixXd, 0,
+    //            Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>
+    //     M2(A.data(), 5, 2,
+    //         Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>(1, 5));
+    // std::cout << M2 << std::endl;
 
     // std::cout << X - Y << std::endl;
     // int n = 1024 * 10;

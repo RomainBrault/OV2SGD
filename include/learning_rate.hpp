@@ -3,8 +3,10 @@
 
 #include <functional>
 
+#ifdef RELEASE
 #define EIGEN_NO_AUTOMATIC_RESIZING
 #define EIGEN_NO_DEBUG
+#endif
 #include "Eigen/Dense"
 
 class LearningRate
@@ -28,12 +30,21 @@ public:
 
 };
 
-inline auto InverseScaling(double gamma0, double gamma1)
+inline auto InverseScaling(double gamma0, double gamma1, double alpha)
     -> LearningRate
 {
-    return LearningRate([gamma0, gamma1](long int i) -> double
+    return LearningRate([gamma0, gamma1, alpha](long int i) -> double
     {
-        return gamma0 / (1. + gamma1 * i);
+        return gamma0 * std::pow(static_cast<double>(1 + gamma1 * i), alpha);
+    });
+}
+
+inline auto AverageScaling(long int d, long int n)
+    -> LearningRate
+{
+    return LearningRate([d, n](long int i) -> double
+    {
+        return 1. / std::max<double>(std::max<double>(1, i - d), i - n);
     });
 }
 

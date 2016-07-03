@@ -3,6 +3,12 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0042 NEW)
 endif()
 
+option(USE_FLTO "Use link time optimisation" ON)
+option(USE_OPENMP "Use OpenMP" ON)
+option(US_TCMALLOC "Use tcmalloc" ON)
+set(PYBIND11_PYTHON_VERSION ""
+	CACHE STRING "Python version to use for compiling the example application")
+
 project(ov2sgd)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
@@ -19,16 +25,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
+set(PYBIND11_PYTHON_VERSION "3.5")
+set(Python_ADDITIONAL_VERSIONS "3.5")
+
 # Try to autodetect Python (can be overridden manually if needed)
-set(Python_ADDITIONAL_VERSIONS 3.4 3.5 3.6 3.7)
-if (NOT ${EXAMPLE_PYTHON_VERSION} STREQUAL "")
-  	find_package(PythonLibs ${EXAMPLE_PYTHON_VERSION} EXACT)
- 	if (NOT PythonLibs_FOUND)
-    	find_package(PythonLibs ${EXAMPLE_PYTHON_VERSION} REQUIRED)
-  	endif()
-else()
-  	find_package(PythonLibs REQUIRED)
-endif()
+find_package(PythonLibs ${PYBIND11_PYTHON_VERSION} REQUIRED)
+find_package(PythonInterp ${PYBIND11_PYTHON_VERSION} REQUIRED)
 string(REPLACE "+" "" PYTHONLIBS_VERSION_STRING "+${PYTHONLIBS_VERSION_STRING}")
 
 include_directories("${PROJECT_SOURCE_DIR}/pybind11/include")
@@ -42,13 +44,34 @@ add_library(_pyov2sgd SHARED ${PYSOURCES})
 target_link_libraries(_pyov2sgd ov2sgd)
 set_target_properties(_pyov2sgd PROPERTIES PREFIX "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native")
+if (USE_OPENMP)
+	find_package(OpenMP)
+	if(OPENMP_FOUND)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	endif()
+endif()
+
+if (US_TCMALLOC)
+	find_package(TcMalloc)
+	if(Tcmalloc_FOUND)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+-ltcmalloc \
+-fno-builtin-malloc -fno-builtin-calloc \
+-fno-builtin-realloc -fno-builtin-free")
+	endif()
+endif()
+
+message(STATUS CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mtune=native \
+-march=native -funroll-loops -ffast-math")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++ -fopenmp")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lstdc++")
 endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-	CHECK_CXX_COMPILER_FLAG("-std=c++14" HAS_CPP14_FLAG)
-	CHECK_CXX_COMPILER_FLAG("-std=c++11" HAS_CPP11_FLAG)
+	CHECK_CXX_COMPILER_FLAG(-std=c++14 HAS_CPP14_FLAG)
+	CHECK_CXX_COMPILER_FLAG(-std=c++11 HAS_CPP11_FLAG)
 
 	if (HAS_CPP14_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
@@ -65,9 +88,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
 		# Check for Link Time Optimization support
-		CHECK_CXX_COMPILER_FLAG("-flto" HAS_LTO_FLAG)
-		if (HAS_LTO_FLAG)
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
+		if (USE_LTO)
+			CHECK_CXX_COMPILER_FLAG(-flto HAS_LTO_FLAG)
+			if (HAS_LTO_FLAG)
+				set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
+			endif()
 		endif()
 	endif()
 endif()

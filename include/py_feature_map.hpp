@@ -10,7 +10,22 @@
 
 auto py_DecomposableGaussian(pybind11::array_t<double> & A,
                              double sigma)
-    -> FeatureMap;
+    -> DecomposableFeatureMap;
+
+auto py_DecomposableGaussianB(pybind11::array_t<double> & A,
+                              double sigma)
+    -> DecomposableFeatureMap;
+
+auto py_DecomposableSkewedChi2(pybind11::array_t<double> & A,
+                               double skewness)
+    -> DecomposableFeatureMap;
+
+auto py_DecomposableSkewedChi2B(pybind11::array_t<double> & B,
+                                double skewness)
+    -> DecomposableFeatureMap;
+
+auto py_TransformableGaussian(double sigma)
+    -> TransformableFeatureMap;
 
 auto py_init_feature_map(pybind11::module & m)
     -> void;

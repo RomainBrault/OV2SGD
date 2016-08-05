@@ -99,7 +99,7 @@ auto RidgeLoss(void)
            Ref<MatrixXd> residuals)
             -> void
         {
-            residuals.noalias() = (pred - target) / target.cols();
+            residuals = (pred - target) / target.cols();
         },
 
         [](const Ref<const MatrixXd> pred,

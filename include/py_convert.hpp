@@ -6,7 +6,7 @@
 #include <pybind11/operators.h>
 #include <pybind11/stl.h>
 
-#ifdef RELEASE
+#ifdef NDEBUG
 #define EIGEN_NO_AUTOMATIC_RESIZING
 #define EIGEN_NO_DEBUG
 #endif

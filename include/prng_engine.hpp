@@ -399,23 +399,9 @@ private:
 #undef MIXK
 #undef MIX2
 
-template <typename M1, typename M2, typename T>
-static auto shuffle(M1 & X, M2 & y, T & r_engine)
-    -> void
-{
-    // Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
-    //     perm(X.cols());
-    // perm.setIdentity();
-    // std::shuffle(perm.indices().data(),
-    //              perm.indices().data() + perm.indices().size(),
-    //              r_engine);
-    // X *= perm;
-    // y *= perm;
-}
-
-template <typename T>
-static auto shuffle(Eigen::SparseMatrix<double> & X,
-                    Eigen::SparseMatrix<double> & y, T & r_engine)
+template <typename T, int O, typename U>
+static auto shuffle(Eigen::SparseMatrix<double, O, U> & X,
+                    Eigen::SparseMatrix<double, O, U> & y, T & r_engine)
     -> void
 {
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
@@ -428,8 +414,9 @@ static auto shuffle(Eigen::SparseMatrix<double> & X,
     y.twistedBy(perm);
 }
 
-template <typename M2, typename T>
-static auto shuffle(Eigen::SparseMatrix<double> & X, M2 & y, T & r_engine)
+template <typename M1, typename T, int O, typename U>
+static auto shuffle(Eigen::SparseMatrix<double, O, U> & X,
+                    M1 & y, T & r_engine)
     -> void
 {
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
@@ -442,8 +429,9 @@ static auto shuffle(Eigen::SparseMatrix<double> & X, M2 & y, T & r_engine)
     y *= perm;
 }
 
-template <typename M1, typename T>
-static auto shuffle(M1 & X, Eigen::SparseMatrix<double> & y, T & r_engine)
+template <typename M1, typename T, int O, typename U>
+static auto shuffle(M1 & X,
+                    Eigen::SparseMatrix<double, O, U> & y, T & r_engine)
     -> void
 {
     Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
@@ -454,6 +442,20 @@ static auto shuffle(M1 & X, Eigen::SparseMatrix<double> & y, T & r_engine)
                  r_engine);
     X *= perm;
     y.twistedBy(perm);
+}
+
+template <typename M1, typename M2, typename T>
+static auto shuffle(M1 & X, M2 & y, T & r_engine)
+    -> void
+{
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic>
+        perm(X.cols());
+    perm.setIdentity();
+    std::shuffle(perm.indices().data(),
+                 perm.indices().data() + perm.indices().size(),
+                 r_engine);
+    X *= perm;
+    y *= perm;
 }
 
 #endif

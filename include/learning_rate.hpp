@@ -3,7 +3,7 @@
 
 #include <functional>
 
-#ifdef RELEASE
+#ifdef NDEBUG
 #define EIGEN_NO_AUTOMATIC_RESIZING
 #define EIGEN_NO_DEBUG
 #endif

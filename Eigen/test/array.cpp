@@ -13,6 +13,7 @@ template<typename ArrayType> void array(const ArrayType& m)
 {
   typedef typename ArrayType::Index Index;
   typedef typename ArrayType::Scalar Scalar;
+  typedef typename ArrayType::RealScalar RealScalar;
   typedef Array<Scalar, ArrayType::RowsAtCompileTime, 1> ColVectorType;
   typedef Array<Scalar, 1, ArrayType::ColsAtCompileTime> RowVectorType;
 
@@ -72,7 +73,7 @@ template<typename ArrayType> void array(const ArrayType& m)
   VERIFY_IS_MUCH_SMALLER_THAN(abs(m1.rowwise().sum().sum() - m1.sum()), m1.abs().sum());
   if (!internal::isMuchSmallerThan(abs(m1.sum() - (m1+m2).sum()), m1.abs().sum(), test_precision<Scalar>()))
       VERIFY_IS_NOT_APPROX(((m1+m2).rowwise().sum()).sum(), m1.sum());
-  VERIFY_IS_APPROX(m1.colwise().sum(), m1.colwise().redux(internal::scalar_sum_op<Scalar>()));
+  VERIFY_IS_APPROX(m1.colwise().sum(), m1.colwise().redux(internal::scalar_sum_op<Scalar,Scalar>()));
 
   // vector-wise ops
   m3 = m1;
@@ -102,6 +103,22 @@ template<typename ArrayType> void array(const ArrayType& m)
   FixedArrayType f4(f1.data());
   VERIFY_IS_APPROX(f4, f1);
   
+  // pow
+  VERIFY_IS_APPROX(m1.pow(2), m1.square());
+  VERIFY_IS_APPROX(pow(m1,2), m1.square());
+  VERIFY_IS_APPROX(m1.pow(3), m1.cube());
+  VERIFY_IS_APPROX(pow(m1,3), m1.cube());
+  VERIFY_IS_APPROX((-m1).pow(3), -m1.cube());
+  VERIFY_IS_APPROX(pow(2*m1,3), 8*m1.cube());
+  ArrayType exponents = ArrayType::Constant(rows, cols, RealScalar(2));
+  VERIFY_IS_APPROX(Eigen::pow(m1,exponents), m1.square());
+  VERIFY_IS_APPROX(m1.pow(exponents), m1.square());
+  VERIFY_IS_APPROX(Eigen::pow(2*m1,exponents), 4*m1.square());
+  VERIFY_IS_APPROX((2*m1).pow(exponents), 4*m1.square());
+  VERIFY_IS_APPROX(Eigen::pow(m1,2*exponents), m1.square().square());
+  VERIFY_IS_APPROX(m1.pow(2*exponents), m1.square().square());
+  VERIFY_IS_APPROX(Eigen::pow(m1(0,0), exponents), ArrayType::Constant(rows,cols,m1(0,0)*m1(0,0)));
+
   // Check possible conflicts with 1D ctor
   typedef Array<Scalar, Dynamic, 1> OneDArrayType;
   OneDArrayType o1(rows);
@@ -281,22 +298,6 @@ template<typename ArrayType> void array_real(const ArrayType& m)
   VERIFY_IS_APPROX(m1.exp() * m2.exp(), exp(m1+m2));
   VERIFY_IS_APPROX(m1.exp(), exp(m1));
   VERIFY_IS_APPROX(m1.exp() / m2.exp(),(m1-m2).exp());
-
-  VERIFY_IS_APPROX(m1.pow(2), m1.square());
-  VERIFY_IS_APPROX(pow(m1,2), m1.square());
-  VERIFY_IS_APPROX(m1.pow(3), m1.cube());
-  VERIFY_IS_APPROX(pow(m1,3), m1.cube());
-  VERIFY_IS_APPROX((-m1).pow(3), -m1.cube());
-  VERIFY_IS_APPROX(pow(2*m1,3), 8*m1.cube());
-
-  ArrayType exponents = ArrayType::Constant(rows, cols, RealScalar(2));
-  VERIFY_IS_APPROX(Eigen::pow(m1,exponents), m1.square());
-  VERIFY_IS_APPROX(m1.pow(exponents), m1.square());
-  VERIFY_IS_APPROX(Eigen::pow(2*m1,exponents), 4*m1.square());
-  VERIFY_IS_APPROX((2*m1).pow(exponents), 4*m1.square());
-  VERIFY_IS_APPROX(Eigen::pow(m1,2*exponents), m1.square().square());
-  VERIFY_IS_APPROX(m1.pow(2*exponents), m1.square().square());
-  VERIFY_IS_APPROX(pow(m1(0,0), exponents), ArrayType::Constant(rows,cols,m1(0,0)*m1(0,0)));
 
   VERIFY_IS_APPROX(m3.pow(RealScalar(0.5)), m3.sqrt());
   VERIFY_IS_APPROX(pow(m3,RealScalar(0.5)), m3.sqrt());
@@ -807,7 +808,7 @@ void test_array()
   VERIFY((internal::is_same< internal::global_math_functions_filtering_base<int>::type, int >::value));
   VERIFY((internal::is_same< internal::global_math_functions_filtering_base<float>::type, float >::value));
   VERIFY((internal::is_same< internal::global_math_functions_filtering_base<Array2i>::type, ArrayBase<Array2i> >::value));
-  typedef CwiseUnaryOp<internal::scalar_multiple_op<double>, ArrayXd > Xpr;
+  typedef CwiseUnaryOp<internal::scalar_abs_op<double>, ArrayXd > Xpr;
   VERIFY((internal::is_same< internal::global_math_functions_filtering_base<Xpr>::type,
                            ArrayBase<Xpr>
                          >::value));

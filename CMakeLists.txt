@@ -3,7 +3,7 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0042 NEW)
 endif()
 
-option(USE_FLTO "Use link time optimisation" ON)
+option(USE_LTO "Use link time optimisation" ON)
 option(USE_OPENMP "Use OpenMP" ON)
 option(US_TCMALLOC "Use tcmalloc" ON)
 set(PYBIND11_PYTHON_VERSION ""
@@ -64,6 +64,8 @@ endif()
 
 message(STATUS CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS})
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mtune=native \
+# -march=native -funroll-loops -ffast-math")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m64 -mtune=native \
 -march=native -funroll-loops -ffast-math")
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")

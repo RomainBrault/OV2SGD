@@ -59,7 +59,8 @@ if [ $cflag = yes ] ;
           -DPYTHON_LIBRARY=usr/local/Cellar/python3/3.5.1/Frameworks/Python.framework/Versions/3.5/lib/libpython3.5.dylib \
           -DPython_FRAMEWORKS=usr/local/Cellar/python3/3.5.1/Frameworks/ \
           -DCMAKE_INSTALL_PREFIX:PATH="$PWD/.." \
-          -DUSE_TCMALLOC=ON -DUSE_OPENMP=ON -DUSE_LTO=ON ..;
+          -DUSE_TCMALLOC=ON -DUSE_OPENMP=ON -DUSE_LTO=ON .. \
+          -DCMAKE_BUILD_TYPE=Release;
 	cd ..;
 fi
 

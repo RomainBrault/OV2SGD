@@ -264,7 +264,7 @@ struct FullReducer<Self, Op, ThreadPoolDevice, Vectorizable> {
     const Index numblocks = blocksize > 0 ? num_coeffs / blocksize : 0;
     eigen_assert(num_coeffs >= numblocks * blocksize);
 
-    Barrier barrier(numblocks);
+    Barrier barrier(internal::convert_index<unsigned int>(numblocks));
     MaxSizeVector<typename Self::CoeffReturnType> shards(numblocks, reducer.initialize());
     for (Index i = 0; i < numblocks; ++i) {
       device.enqueue_with_barrier(&barrier, &FullReducerShard<Self, Op, Vectorizable>::run,
@@ -558,7 +558,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packet(Index index) const
   {
     EIGEN_STATIC_ASSERT((PacketSize > 1), YOU_MADE_A_PROGRAMMING_MISTAKE)
-    eigen_assert(index + PacketSize - 1 < internal::array_prod(dimensions()));
+    eigen_assert(index + PacketSize - 1 < Index(internal::array_prod(dimensions())));
 
     EIGEN_ALIGN_MAX typename internal::remove_const<CoeffReturnType>::type values[PacketSize];
     if (ReducingInnerMostDims) {

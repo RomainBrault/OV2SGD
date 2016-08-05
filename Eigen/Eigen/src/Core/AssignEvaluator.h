@@ -116,9 +116,9 @@ private:
                         : 1,
     UnrollingLimit      = EIGEN_UNROLLING_LIMIT * ActualPacketSize,
     MayUnrollCompletely = int(Dst::SizeAtCompileTime) != Dynamic
-                       && int(Dst::SizeAtCompileTime) * int(SrcEvaluator::CoeffReadCost) <= int(UnrollingLimit),
+                       && int(Dst::SizeAtCompileTime) * (int(DstEvaluator::CoeffReadCost)+int(SrcEvaluator::CoeffReadCost)) <= int(UnrollingLimit),
     MayUnrollInner      = int(InnerSize) != Dynamic
-                       && int(InnerSize) * int(SrcEvaluator::CoeffReadCost) <= int(UnrollingLimit)
+                       && int(InnerSize) * (int(DstEvaluator::CoeffReadCost)+int(SrcEvaluator::CoeffReadCost)) <= int(UnrollingLimit)
   };
 
 public:
@@ -165,6 +165,7 @@ public:
     EIGEN_DEBUG_VAR(MayLinearVectorize)
     EIGEN_DEBUG_VAR(MaySliceVectorize)
     std::cerr << "Traversal" << " = " << Traversal << " (" << demangle_traversal(Traversal) << ")" << std::endl;
+    EIGEN_DEBUG_VAR(SrcEvaluator::CoeffReadCost)
     EIGEN_DEBUG_VAR(UnrollingLimit)
     EIGEN_DEBUG_VAR(MayUnrollCompletely)
     EIGEN_DEBUG_VAR(MayUnrollInner)
@@ -687,7 +688,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(const DstX
 template<typename DstXprType, typename SrcXprType>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(const DstXprType& dst, const SrcXprType& src)
 {
-  call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar>());
+  call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar,typename SrcXprType::Scalar>());
 }
 
 /***************************************************************************
@@ -709,7 +710,7 @@ template<> struct AssignmentKind<DenseShape,DenseShape> { typedef Dense2Dense Ki
 // This is the main assignment class
 template< typename DstXprType, typename SrcXprType, typename Functor,
           typename Kind = typename AssignmentKind< typename evaluator_traits<DstXprType>::Shape , typename evaluator_traits<SrcXprType>::Shape >::Kind,
-          typename Scalar = typename DstXprType::Scalar>
+          typename EnableIf = void>
 struct Assignment;
 
 
@@ -722,13 +723,13 @@ template<typename Dst, typename Src>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 void call_assignment(Dst& dst, const Src& src)
 {
-  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar>());
+  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar,typename Src::Scalar>());
 }
 template<typename Dst, typename Src>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 void call_assignment(const Dst& dst, const Src& src)
 {
-  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar>());
+  call_assignment(dst, src, internal::assign_op<typename Dst::Scalar,typename Src::Scalar>());
 }
                      
 // Deal with "assume-aliasing"
@@ -787,7 +788,7 @@ template<typename Dst, typename Src>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 void call_assignment_no_alias(Dst& dst, const Src& src)
 {
-  call_assignment_no_alias(dst, src, internal::assign_op<typename Dst::Scalar>());
+  call_assignment_no_alias(dst, src, internal::assign_op<typename Dst::Scalar,typename Src::Scalar>());
 }
 
 template<typename Dst, typename Src, typename Func>
@@ -809,15 +810,17 @@ template<typename Dst, typename Src>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 void call_assignment_no_alias_no_transpose(Dst& dst, const Src& src)
 {
-  call_assignment_no_alias_no_transpose(dst, src, internal::assign_op<typename Dst::Scalar>());
+  call_assignment_no_alias_no_transpose(dst, src, internal::assign_op<typename Dst::Scalar,typename Src::Scalar>());
 }
 
 // forward declaration
 template<typename Dst, typename Src> void check_for_aliasing(const Dst &dst, const Src &src);
 
 // Generic Dense to Dense assignment
-template< typename DstXprType, typename SrcXprType, typename Functor, typename Scalar>
-struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Scalar>
+// Note that the last template argument "Weak" is needed to make it possible to perform
+// both partial specialization+SFINAE without ambiguous specialization
+template< typename DstXprType, typename SrcXprType, typename Functor, typename Weak>
+struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Weak>
 {
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const Functor &func)
@@ -834,11 +837,13 @@ struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Scalar>
 
 // Generic assignment through evalTo.
 // TODO: not sure we have to keep that one, but it helps porting current code to new evaluator mechanism.
-template< typename DstXprType, typename SrcXprType, typename Functor, typename Scalar>
-struct Assignment<DstXprType, SrcXprType, Functor, EigenBase2EigenBase, Scalar>
+// Note that the last template argument "Weak" is needed to make it possible to perform
+// both partial specialization+SFINAE without ambiguous specialization
+template< typename DstXprType, typename SrcXprType, typename Functor, typename Weak>
+struct Assignment<DstXprType, SrcXprType, Functor, EigenBase2EigenBase, Weak>
 {
   EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar> &/*func*/)
+  static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar,typename SrcXprType::Scalar> &/*func*/)
   {
     eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
     src.evalTo(dst);

@@ -4,7 +4,7 @@
 #include <functional>
 #include <random>
 
-#ifdef RELEASE
+#ifdef NDEBUG
 #define EIGEN_NO_AUTOMATIC_RESIZING
 #define EIGEN_NO_DEBUG
 #endif
@@ -81,7 +81,6 @@ public:
                 W(i, j) = sampler(r_engine);
             }
         }
-        _feature_map_dense(X, phi_w, W, Z);
     }
 
     inline auto operator ()(const Eigen::SparseMatrix<double> & X,

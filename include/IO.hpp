@@ -8,7 +8,7 @@
 #include <exception>
 #include <utility>
 
-#ifdef RELEASE
+#ifdef NDEBUG
 #define EIGEN_NO_AUTOMATIC_RESIZING
 #define EIGEN_NO_DEBUG
 #endif

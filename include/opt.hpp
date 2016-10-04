@@ -361,7 +361,7 @@ auto fit(const M1 & Xt, const M2 & yt)
         double step_size = learning_rate(t);
         coef_seg = phi_w.leftCols(c_batch) * grad_vview +
             get_nu1() * get_coefs().segment(D_phi_w_b, D_phi_w);
-        std::cout << coef_seg.transpose() << std::endl;
+        // std::cout << coef_seg.transpose() << std::endl;
 
         /* Precondition the gradient update */
         /* This stuff allocate a huge amount of memory.... */
@@ -374,7 +374,7 @@ auto fit(const M1 & Xt, const M2 & yt)
         condition_mat(cond_operator.get_Lhs(), get_nu1());
         preconditioner.compute(cond_operator);
         update = preconditioner.solve(coef_seg);
-        std::cout << update.transpose() << std::endl;
+        // std::cout << update.transpose() << std::endl;
 
         /* Perform the update */
         long int head_D_phi_w = D_phi_w_b;
@@ -384,9 +384,9 @@ auto fit(const M1 & Xt, const M2 & yt)
         get_coefs().segment(head_D_phi_w, D_phi_w) -= step_size * update;
         get_coefs().tail(tail_D_phi_w) *= shrink;
 
-        std::cout << predict(X.middleCols(X_batch_b, c_batch)).transpose() << std::endl;
+        // std::cout << predict(X.middleCols(X_batch_b, c_batch)).transpose() << std::endl;
         Eigen::MatrixXd yp(y.middleCols(X_batch_b, c_batch));
-        std::cout << yp.transpose() << std::endl;
+        // std::cout << yp.transpose() << std::endl;
 
         for (long int i = 0; i < get_coefs().size() / (2 * r); ++i) {
             double v = get_coefs().segment(2 * i * r, r).norm();
@@ -399,10 +399,10 @@ auto fit(const M1 & Xt, const M2 & yt)
                 get_coefs().segment(2 * i * r, r).fill(0);
             }
         }
-    std::cout << "NEXT" << std::endl << std::endl;
+    // std::cout << "NEXT" << std::endl << std::endl;
     }
 
-    std::cout << "END" << std::endl << std::endl;
+    // std::cout << "END" << std::endl << std::endl;
 
     return *this;
 }
